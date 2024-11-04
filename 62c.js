@@ -1,23 +1,28 @@
-function countPairs(n, r, distances) {
-	let count = 0;
-	let j = 0;
+const fs = require('fs');
+let fileContent = fs.readFileSync('input.txt', 'utf8');
 
-	for (let i = 0; i < n; i++) {
-		// Двигаем указатель j, чтобы найти первый памятник, который виден с i
-		while (j < n && distances[j] <= distances[i] + r) {
-			j++;
+const countPairs = () => {
+	const lines = fileContent.toString().split('\n');
+	if (lines.length > 0) {
+
+		const n = Number(lines[0].split(' ')[0]);
+		const r = Number(lines[0].split(' ')[1]);
+		const d = lines[1].split(' ').map(Number);
+
+		let count = 0;
+		let right = 0;
+
+		for (let left = 0; left < n; left++) {
+			while (right < n && d[right] - d[left] <= r) {
+				right++;
+			}
+			count += n - right;
 		}
-		// Все памятники между i и j не видят друг друга
-		// j - i - 1 - количество памятников, которые можно выбрать с i
-		count += j - i - 1;
+
+		return count;
+
 	}
+	return 'Не удалось прочитать файл.';
+};
 
-	return count;
-}
-
-// Пример использования
-const n = 4;
-const r = 4;
-const distances = [1, 3, 5, 8];
-
-console.log(countPairs(n, r, distances)); // Вывод: 2
+fs.writeFileSync('output.txt', countPairs().toString());

@@ -1,30 +1,44 @@
-function removeMedians(n, arr) {
-	// Сортируем массив для начального состояния
-	arr.sort((a, b) => a - b);
-	const result = [];
+const fs = require('fs');
 
-	while (arr.length > 0) {
-		let midIndex = Math.floor((arr.length - 1) / 2);
-		let median = arr[midIndex];
+// Чтение данных из файла
+let fileContent = fs.readFileSync('input.txt', 'utf8');
+const lines = fileContent.toString().split('\n');
 
-		// Добавляем медиану в результат
-		result.push(median);
+if (lines.length > 0) {
+	const n = Number(lines[0]);
+	const arr = lines[1].split(' ').map(Number);
 
-		// Удаляем медиану из массива
-		arr.splice(midIndex, 1);
+	// Функция для нахождения медианы и её удаления
+	function removeMedians(arr) {
+		const result = [];
+		let sortedArr = [];
 
-		// Сортируем массив снова после удаления
-		arr.sort((a, b) => a - b);
+		while (arr.length > 0) {
+			// Сортируем текущий массив
+			sortedArr = arr.slice().sort((a, b) => a - b);
+			let median;
+
+			const len = sortedArr.length;
+			if (len % 2 === 1) {
+				// Если длина нечетная, берем средний элемент
+				median = sortedArr[Math.floor(len / 2)];
+			} else {
+				// Если длина четная, берем меньшее из двух средних
+				median = Math.min(sortedArr[len / 2 - 1], sortedArr[len / 2]);
+			}
+
+			result.push(median);
+
+			// Удаляем первое вхождение медианы из оригинального массива
+			const index = arr.indexOf(median);
+			if (index !== -1) {
+				arr.splice(index, 1);
+			}
+		}
+
+		return result;
 	}
 
-	return result;
+	const output = removeMedians(arr);
+	fs.writeFileSync('output.txt', output.join(' '));
 }
-
-// Пример использования
-const n1 = 3;
-const arr1 = [19, 3, 8];
-console.log(removeMedians(n1, arr1)); // Вывод: [8, 3, 19]
-
-const n2 = 4;
-const arr2 = [1, 2, 4, 2];
-console.log(removeMedians(n2, arr2)); // Вывод: [2, 2, 1, 4]

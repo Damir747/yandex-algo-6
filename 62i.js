@@ -1,50 +1,54 @@
-function studyOrder(n, interest, utility, mood) {
-	// Создаем массив алгоритмов с информацией (индекс, интересность, полезность)
-	const algorithms = [];
-	for (let i = 0; i < n; i++) {
-		algorithms.push([i + 1, interest[i], utility[i]]);
-	}
+const fs = require('fs');
+let fileContent = fs.readFileSync('input.txt', 'utf8');
+const lines = fileContent.trim().split('\n');
 
-	// Сортируем по интересности и полезности в порядке убывания
-	const sortedByInterest = [...algorithms].sort((a, b) => b[1] - a[1] || b[2] - a[2] || a[0] - b[0]);
-	const sortedByUtility = [...algorithms].sort((a, b) => b[2] - a[2] || b[1] - a[1] || a[0] - b[0]);
+const n = parseInt(lines[0]);
+const interests = lines[1].split(' ').map(Number);
+const usefulnesses = lines[2].split(' ').map(Number);
+const moods = lines[3].split(' ').map(Number);
 
-	// Храним текущие индексы для извлечения на каждый день
-	let interestIndex = 0;
-	let utilityIndex = 0;
-	const chosen = new Set();
-	const result = [];
+function studyOrder(n, interests, usefulnesses, moods) {
+	const algorithms = Array.from({ length: n }, (_, i) => ({
+		index: i + 1,
+		interest: interests[i],
+		usefulness: usefulnesses[i]
+	}));
 
-	for (const moodToday of mood) {
-		let chosenAlgorithm;
+	// Sort algorithms for both interest and usefulness in descending order
+	const interestSorted = [...algorithms].sort((a, b) =>
+		b.interest - a.interest || b.usefulness - a.usefulness || a.index - b.index
+	);
+	const usefulnessSorted = [...algorithms].sort((a, b) =>
+		b.usefulness - a.usefulness || b.interest - a.interest || a.index - b.index
+	);
 
-		if (moodToday === 1) {
-			// Извлекаем по полезности
-			while (chosen.has(sortedByUtility[utilityIndex][0])) {
-				utilityIndex++;
+	let interestPointer = 0;
+	let usefulnessPointer = 0;
+	const studied = Array(n).fill(false);
+	const order = [];
+
+	for (const mood of moods) {
+		if (mood === 1) {
+			// Select by usefulness
+			while (studied[usefulnessSorted[usefulnessPointer].index - 1]) {
+				usefulnessPointer++;
 			}
-			chosenAlgorithm = sortedByUtility[utilityIndex];
-			utilityIndex++;
+			const algo = usefulnessSorted[usefulnessPointer];
+			studied[algo.index - 1] = true;
+			order.push(algo.index);
 		} else {
-			// Извлекаем по интересности
-			while (chosen.has(sortedByInterest[interestIndex][0])) {
-				interestIndex++;
+			// Select by interest
+			while (studied[interestSorted[interestPointer].index - 1]) {
+				interestPointer++;
 			}
-			chosenAlgorithm = sortedByInterest[interestIndex];
-			interestIndex++;
+			const algo = interestSorted[interestPointer];
+			studied[algo.index - 1] = true;
+			order.push(algo.index);
 		}
-
-		// Добавляем в результат и отмечаем алгоритм как изученный
-		result.push(chosenAlgorithm[0]);
-		chosen.add(chosenAlgorithm[0]);
 	}
 
-	return result;
+	return order.join(' ');
 }
 
-// Пример использования
-const n = 5;
-const interest = [1, 2, 3, 4, 5];
-const utility = [5, 4, 3, 2, 1];
-const mood = [1, 0, 1, 0, 0];
-console.log(studyOrder(n, interest, utility, mood)); // Вывод: [1, 5, 2, 4, 3]
+const result = studyOrder(n, interests, usefulnesses, moods);
+fs.writeFileSync('output.txt', result);
