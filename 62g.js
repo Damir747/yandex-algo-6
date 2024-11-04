@@ -1,50 +1,54 @@
 const fs = require('fs');
+let fileContent = fs.readFileSync('input.txt', 'utf8');
+const lines = fileContent.toString().split('\n');
 
-const findMaxLength = () => {
-	const input = fs.readFileSync('input.txt', 'utf8').split('\n');
-	const [n, c] = input[0].split(' ').map(Number);
-	const s = input[1].trim();
+if (lines.length > 0) {
+	const n = Number(lines[0].split(' ')[0]);
+	const arr = lines[1].split(' ').map(Number);
 
-	let left = 0;
-	let countA = 0; // Количество 'a' в окне
-	let countB = 0; // Количество 'b' в окне
-	let countPairs = 0; // Количество пар (i, j) с 'a' и 'b'
-	let maxLength = 0;
+	function minimalTransitions(n, employees) {
+		const nakopPrefix = new Array(n).fill(0);
+		const nakopSuffix = new Array(n).fill(0);
 
-	for (let right = 0; right < n; right++) {
-		if (s[right] === 'a') {
-			countA++;
-		} else if (s[right] === 'b') {
-			countB++;
-			countPairs += countA; // Каждое 'b' добавляет количество 'a' в текущем окне
+		nakopPrefix[0] = employees[0];
+		for (let i = 1; i < n; i++) {
+			nakopPrefix[i] = nakopPrefix[i - 1] + employees[i];
+		}
+		nakopSuffix[n - 1] = employees[n - 1];
+		for (let i = n - 2; i >= 0; i--) {
+			nakopSuffix[i] = nakopSuffix[i + 1] + employees[i];
 		}
 
-		// Отладочный вывод
-		console.log(`Right: ${right}, Char: ${s[right]}, CountA: ${countA}, CountB: ${countB}, CountPairs: ${countPairs}`);
-
-		// Проверяем, превышает ли грубость допустимое значение
-		while (countPairs > c) {
-			if (s[left] === 'a') {
-				// Уменьшаем количество 'a'
-				countA--;
-				// Уменьшаем количество пар, поскольку удаляем 'a'
-				countPairs -= countB; // Пары зависят от оставшихся 'b'
-			} else if (s[left] === 'b') {
-				// Уменьшаем количество 'b'
-				countB--;
-				// Уменьшаем количество пар, учитывая оставшиеся 'a'
-				// countPairs -= countA; // Пары зависят от оставшихся 'a'
-			}
-			left++; // Двигаем левый указатель
+		// Префиксные и суффиксные суммы
+		let prefixSum = new Array(n).fill(0);
+		let suffixSum = new Array(n).fill(0);
+		// Вычисление префиксных сумм
+		prefixSum[0] = 0;
+		for (let i = 1; i < n; i++) {
+			prefixSum[i] = prefixSum[i - 1] + nakopPrefix[i - 1];
 		}
 
+		// Вычисление суффиксных сумм
+		suffixSum[n - 1] = 0;
+		for (let i = n - 2; i >= 0; i--) {
+			suffixSum[i] = suffixSum[i + 1] + nakopSuffix[i + 1];
+		}
 
-		// Обновляем максимальную длину подстроки
-		maxLength = Math.max(maxLength, right - left + 1);
+		let minCost = Infinity;
+
+		// Вычисляем суммарные переходы для каждого кабинета как опенспейс
+		for (let k = 0; k < n; k++) {
+			let cost = 0;
+
+			// Переходы сотрудников слева от кабинета k
+			cost += prefixSum[k];
+			// Переходы сотрудников справа от кабинета k
+			cost += suffixSum[k];
+			minCost = Math.min(minCost, cost);
+		}
+
+		return minCost;
 	}
 
-	return maxLength;
-};
-
-const result = findMaxLength();
-fs.writeFileSync('output.txt', result.toString());
+	fs.writeFileSync('output.txt', minimalTransitions(n, arr).toString());
+}
