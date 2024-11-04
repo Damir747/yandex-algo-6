@@ -1,45 +1,40 @@
 const fs = require('fs');
-let fileContent = fs.readFileSync('input.txt', 'utf8');
 
-const findLongestCensoredSubstring = () => {
-	const lines = fileContent.toString().split('\n');
-	if (lines.length > 1) {
-		const [n, c] = lines[0].split(' ').map(Number);
-		const s = lines[1].trim();
+const findMaxLength = () => {
+	const input = fs.readFileSync('input.txt', 'utf8').split('\n');
+	const [n, c] = input[0].split(' ').map(Number);
+	const s = input[1].trim();
 
-		let left = 0; // Указатель на начало подстроки
-		let count = 0; // Счетчик грубости
-		let maxLength = 0; // Максимальная длина подстроки
+	let left = 0;
+	let countA = 0; // Количество 'a'
+	let countPairs = 0; // Количество пар (i, j) с 'a' и 'b'
+	let maxLength = 0;
 
-		// Счетчик букв 'b' между 'a'
-		let bCount = 0;
-
-		for (let right = 0; right < n; right++) {
-			// При каждом добавлении 'a' обновляем bCount
-			if (s[right] === 'a') {
-				count += bCount; // Увеличиваем грубость на текущее количество 'b'
-			} else if (s[right] === 'b') {
-				bCount++; // Увеличиваем счетчик 'b'
-			}
-
-			// Проверяем, если грубость превышает c
-			while (count > c) {
-				// Убираем символ слева
-				if (s[left] === 'a') {
-					count -= bCount; // Уменьшаем грубость на количество 'b'
-				} else if (s[left] === 'b') {
-					bCount--; // Уменьшаем счетчик 'b'
-				}
-				left++; // Сдвигаем левый указатель
-			}
-
-			// Обновляем максимальную длину подстроки
-			maxLength = Math.max(maxLength, right - left + 1);
+	for (let right = 0; right < n; right++) {
+		// Обновляем количество 'a' и 'b'
+		if (s[right] === 'a') {
+			countA++;
+		} else if (s[right] === 'b') {
+			countPairs += countA; // Каждое 'b' добавляет количество 'a' в текущем окне
 		}
 
-		return maxLength;
+		// Проверяем, превышает ли грубость допустимое значение
+		while (countPairs > c) {
+			// Уменьшаем счетчик для левого указателя
+			if (s[left] === 'a') {
+				countA--;
+			} else if (s[left] === 'b') {
+				countPairs -= countA; // Вычитаем количество 'a' для всех 'b'
+			}
+			left++;
+		}
+
+		// Обновляем максимальную длину подстроки
+		maxLength = Math.max(maxLength, right - left + 1);
 	}
-	return 0;
+
+	return maxLength;
 };
 
-fs.writeFileSync('output.txt', findLongestCensoredSubstring().toString());
+const result = findMaxLength();
+fs.writeFileSync('output.txt', result.toString());

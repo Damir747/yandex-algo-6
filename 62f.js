@@ -1,65 +1,50 @@
 const fs = require('fs');
+
 const MOD = 1000000007;
 
-function sumOfTripleProducts() {
-	const fileContent = fs.readFileSync('input.txt', 'utf8');
-	const lines = fileContent.toString().split('\n');
-
-	if (lines.length > 1) {
-		const n = Number(lines[0].trim());
-		const a = lines[1].split(' ').map(Number);
-
-		let totalSum = 0;
-		let totalProductSum = 0;
-
-		// Вычисляем общую сумму
-		for (let num of a) {
-			totalSum = (totalSum + num) % MOD;
+// Функция для нахождения модульного обратного числа
+function modInverse(a, p) {
+	let m = p - 2;
+	let inv = 1;
+	while (m > 0) {
+		if (m % 2 === 1) {
+			inv = (inv * a) % p;
 		}
-
-		// Вычисляем сумму произведений
-		for (let i = 0; i < n; i++) {
-			let current = a[i];
-
-			// Сумма оставшихся элементов
-			let sumAfterCurrent = (totalSum - current + MOD) % MOD;
-			let countAfterCurrent = n - (i + 1); // Количество элементов после текущего
-
-			// Умножаем текущее число на сумму остальных
-			totalProductSum = (totalProductSum + (current * sumAfterCurrent % MOD) * countAfterCurrent % MOD) % MOD;
-		}
-
-		// Делим на 6, так как каждое произведение считается трижды
-		totalProductSum = (totalProductSum * modInverse(6, MOD)) % MOD;
-
-		return totalProductSum;
+		a = (a * a) % p;
+		m = Math.floor(m / 2);
 	}
-	return 0;
+	return inv;
 }
 
-// Функция для нахождения обратного элемента по модулю
-function modInverse(a, m) {
-	let m0 = m, t, q;
-	let x0 = 0, x1 = 1;
+// Чтение данных из файла
+let fileContent = fs.readFileSync('input.txt', 'utf8');
+const lines = fileContent.toString().split('\n');
 
-	if (m === 1) return 0;
+if (lines.length > 0) {
+	const n = Number(lines[0]);
+	const arr = lines[1].split(' ').map(Number);
 
-	while (a > 1) {
-		q = Math.floor(a / m);
-		t = m;
+	let S_total = 0;
+	let S_squares = 0;
+	let S_cubes = 0;
 
-		m = a % m;
-		a = t;
-		t = x0;
-
-		x0 = x1 - q * x0;
-		x1 = t;
+	for (let i = 0; i < n; i++) {
+		S_total = (S_total + arr[i]);
+		S_squares = (S_squares + (arr[i] * arr[i]));
+		S_cubes = (S_cubes + (arr[i] * arr[i] * arr[i]));
 	}
 
-	if (x1 < 0) x1 += m0;
+	// Используем формулу для подсчета суммы произведений
+	let totalSum = (S_total * S_total * S_total - 3 * S_total * S_squares + 2 * S_cubes);
 
-	return x1;
+	// Корректируем, чтобы избежать отрицательного значения
+	if (totalSum < 0) {
+		totalSum += MOD;
+	}
+
+	let result = totalSum / 6 % MOD;
+
+	// Выводим результат
+	fs.writeFileSync('output.txt', result.toString());
+
 }
-
-// Записываем результат в файл
-fs.writeFileSync('output.txt', sumOfTripleProducts().toString());
