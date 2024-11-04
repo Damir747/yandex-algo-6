@@ -6,28 +6,38 @@ const findMaxLength = () => {
 	const s = input[1].trim();
 
 	let left = 0;
-	let countA = 0; // Количество 'a'
+	let countA = 0; // Количество 'a' в окне
+	let countB = 0; // Количество 'b' в окне
 	let countPairs = 0; // Количество пар (i, j) с 'a' и 'b'
 	let maxLength = 0;
 
 	for (let right = 0; right < n; right++) {
-		// Обновляем количество 'a' и 'b'
 		if (s[right] === 'a') {
 			countA++;
 		} else if (s[right] === 'b') {
+			countB++;
 			countPairs += countA; // Каждое 'b' добавляет количество 'a' в текущем окне
 		}
 
+		// Отладочный вывод
+		console.log(`Right: ${right}, Char: ${s[right]}, CountA: ${countA}, CountB: ${countB}, CountPairs: ${countPairs}`);
+
 		// Проверяем, превышает ли грубость допустимое значение
 		while (countPairs > c) {
-			// Уменьшаем счетчик для левого указателя
 			if (s[left] === 'a') {
+				// Уменьшаем количество 'a'
 				countA--;
+				// Уменьшаем количество пар, поскольку удаляем 'a'
+				countPairs -= countB; // Пары зависят от оставшихся 'b'
 			} else if (s[left] === 'b') {
-				countPairs -= countA; // Вычитаем количество 'a' для всех 'b'
+				// Уменьшаем количество 'b'
+				countB--;
+				// Уменьшаем количество пар, учитывая оставшиеся 'a'
+				// countPairs -= countA; // Пары зависят от оставшихся 'a'
 			}
-			left++;
+			left++; // Двигаем левый указатель
 		}
+
 
 		// Обновляем максимальную длину подстроки
 		maxLength = Math.max(maxLength, right - left + 1);
