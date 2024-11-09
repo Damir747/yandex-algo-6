@@ -8,6 +8,7 @@ const arr = lines[1].split(' ').map(Number);
 const [m, k] = lines[2].split(' ').map(Number);
 const b = lines[3].split(' ').map(x => parseInt(x) - 1); // Приведение к 0-индексации
 
+// Префиксный массив
 const pref = new Array(n).fill(0);
 for (let i = 1; i < n; i++) {
 	if (arr[i] > arr[i - 1]) {
@@ -17,21 +18,35 @@ for (let i = 1; i < n; i++) {
 	}
 }
 
-const result = new Array(arr.length).fill(0);
+// Массив для хранения только необходимых результатов
+const result = new Array(m);
+const computed = new Map(); // Используем Map для кэширования
 
-// Обработка каждого запроса
-for (let j = 0; j < arr.length; j++) {
-	let currentIndex = pref[j];
+// Функция для получения результата с кэшированием
+const getResult = (index) => {
+	if (computed.has(index)) {
+		return computed.get(index); // Возвращаем кэшированное значение
+	}
+
+	let currentIndex = pref[index];
 	let remainingK = k;
+
 	// Переход по ссылкам, если элементы равны
 	while (currentIndex > 0 && remainingK > 0 && arr[currentIndex] === arr[currentIndex - 1]) {
-		currentIndex = currentIndex - 1;
 		remainingK--; // Уменьшаем количество переходов
-		currentIndex = pref[currentIndex]; // Переходим к следующему элементу
+		currentIndex = pref[currentIndex - 1]; // Переходим к следующему элементу
 	}
-	result[j] = currentIndex + 1;
+
+	// Сохраняем результат в кэш
+	const finalResult = currentIndex + 1; // +1 для 1-индексации
+	computed.set(index, finalResult);
+	return finalResult;
+};
+
+// Вычисление только для нужных индексов
+for (let j = 0; j < m; j++) {
+	result[j] = getResult(b[j]); // Получаем результат для текущего запроса
 }
 
 // Вывод результатов
-const selectedResults = b.map(index => result[index]);
-fs.writeFileSync('output.txt', selectedResults.join(' '));
+fs.writeFileSync('output.txt', result.join(' '));
