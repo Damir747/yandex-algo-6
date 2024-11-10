@@ -1,57 +1,54 @@
 const fs = require('fs');
 
+// Функция для построения минимальной правильной скобочной последовательности
 function buildMinimalPSP(n, w, s) {
-	// Определяем порядок скобок из строки w
-	const openBrackets = w.indexOf('(') < w.indexOf('[') ? ['(', '['] : ['[', '('];
-	const closeBrackets = w.indexOf('(') < w.indexOf('[') ? [')', ']'] : [']', ')'];
+	// Парсим скобки на открывающие и закрывающие
+	const openBrackets = ['(', '['];
+	const closeBrackets = [')', ']'];
+	const pair = { ')': '(', ']': '[' }; // Создаем пары скобок
+	const priority = { [w[0]]: 0, [w[1]]: 1, [w[2]]: 2, [w[3]]: 3 }; // Приоритет
 
-	// Маппинг открывающих скобок на соответствующие закрывающие
-	const bracketMap = {
-		[openBrackets[0]]: closeBrackets[0],
-		[openBrackets[1]]: closeBrackets[1],
-	};
+	const result = []; // Результирующая строка
+	const stack = [];  // Стек для отслеживания открытых скобок
+	let balance = 0;   // Баланс скобок
 
-	let result = s;
-	const stack = [];
-
-	// Обрабатываем строку s, учитывая уже открытые и закрытые скобки
-	for (const char of s) {
+	// Инициализируем результат начальной строкой
+	for (let char of s) {
+		result.push(char);
 		if (openBrackets.includes(char)) {
-			stack.push(char);  // Открываем скобку
-		} else if (closeBrackets.includes(char)) {
-			if (stack.length > 0 && bracketMap[stack[stack.length - 1]] === char) {
-				stack.pop();  // Закрываем скобку, если она соответствует
+			stack.push(char); // Записываем открывающие скобки в стек
+			balance++;
+		} else {
+			stack.pop(); // Убираем последнюю открытую скобку
+			balance--;
+		}
+	}
+
+	// Добавляем открывающие скобки до баланса
+	for (let i = result.length; i < n; i++) {
+		for (let j = 0; j < 4; j++) {
+			if (pair[w[j]] && pair[w[j]] === stack[stack.length - 1]) {
+				result.push(w[j]);
+				stack.pop();
+				balance--;
+				break;
+			} else if (balance < (n - i)) {
+				if (openBrackets.includes(w[j])) {
+					result.push(w[j]);
+					stack.push(w[j]);
+					balance++;
+					break;
+				}
 			}
 		}
 	}
-
-	// Пока длина строки меньше n, добавляем скобки
-	while (result.length < n) {
-		// Закрываем младшие скобки, если они есть
-		while (stack.length > 0 && stack[stack.length - 1] === openBrackets[0]) {
-			result += closeBrackets[0];
-			stack.pop();
-		}
-
-		// Открываем пары, если есть место
-		while (result.length + stack.length < n) {
-			result += openBrackets[0] + closeBrackets[0];
-		}
-
-		// Закрываем остальные скобки, если они есть
-		if (stack.length > 0) {
-			const lastOpen = stack.pop();
-			result += bracketMap[lastOpen];
-		}
-	}
-
-	return result;
+	return result.join('');
 }
 
 // Чтение данных из файла
 const input = fs.readFileSync('input.txt', 'utf8').trim().split('\n');
 const n = parseInt(input[0], 10);
-const w = input[1];
+const w = input[1].trim().split('');
 const s = input[2] || '';
 
 // Построение минимальной ПСП
