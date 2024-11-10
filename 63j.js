@@ -1,52 +1,53 @@
 const fs = require('fs');
 
 function findMinDiscomfort(n, H, chairs) {
+	// Если только один стул, неудобства нет
+	if (n === 1) return 0;
+
 	let left = 0;
-	let currentWidthSum = 0;
+	let currentWidthSum = chairs[0].width;
 	let minDiscomfort = Infinity;
 
-	// Двусторонняя очередь для хранения индексов стульев
-	let deque = [];
+	// Сортируем стулья по высоте
+	chairs.sort((a, b) => a.height - b.height);
 
-	// Функция для вычисления максимальной разности высот между соседними элементами в окне
-	const getMaxDiscomfort = () => {
-		let maxDiscomfort = 0;
-		for (let i = 1; i < deque.length; i++) {
-			maxDiscomfort = Math.max(maxDiscomfort, Math.abs(chairs[deque[i]].height - chairs[deque[i - 1]].height));
+	// Массив для хранения разностей высот соседних стульев
+	const discomforts = [];
+	for (let i = 0; i < n - 1; i++) {
+		discomforts.push(Math.abs(chairs[i + 1].height - chairs[i].height));
+	}
+
+	// Двусторонняя очередь для хранения индексов в массиве discomforts
+	let maxDeque = [];
+
+	// Двигаем правый указатель по массиву discomforts
+	for (let right = 0; right < n - 1; right++) {
+		currentWidthSum += chairs[right + 1].width;
+
+		// Обновляем maxDeque: добавляем новый элемент в конец, поддерживаем порядок убывания
+		while (maxDeque.length > 0 && discomforts[maxDeque[maxDeque.length - 1]] <= discomforts[right]) {
+			maxDeque.pop();
 		}
-		return maxDiscomfort;
-	};
-
-	// Двигаем правый указатель
-	for (let right = 0; right < n; right++) {
-		currentWidthSum += chairs[right].width;
-
-		// Добавляем индекс текущего стула в deque, поддерживаем порядок
-		while (deque.length > 0 && chairs[deque[deque.length - 1]].height > chairs[right].height) {
-			deque.pop();
-		}
-		deque.push(right);
+		maxDeque.push(right);
 
 		// Сдвигаем левый указатель, если сумма ширины больше или равна H
 		while (currentWidthSum >= H) {
-			// Вычисляем максимальное неудобство для текущего окна
-			let discomfort = getMaxDiscomfort();
-			minDiscomfort = Math.min(minDiscomfort, discomfort);
+			// Максимальный дискомфорт для текущего окна
+			minDiscomfort = Math.min(minDiscomfort, discomforts[maxDeque[0]]);
 
 			// Сдвигаем левый указатель
-			currentWidthSum -= chairs[left].width;
+			currentWidthSum -= chairs[left + 1].width;
 			left++;
 
-			// Убираем элементы из deque, которые больше не в окне
-			if (deque[0] < left) {
-				deque.shift();
+			// Убираем элементы из maxDeque, которые больше не в окне
+			if (maxDeque[0] < left) {
+				maxDeque.shift();
 			}
 		}
 	}
 
 	return minDiscomfort;
 }
-
 
 // Чтение данных из файла
 const input = fs.readFileSync('input.txt', 'utf8').split('\n');
@@ -57,14 +58,12 @@ const [n, H] = input[0].split(' ').map(Number);
 // Извлекаем высоты и ширины стульев
 const heights = input[1].split(' ').map(Number);
 const widths = input[2].split(' ').map(Number);
+
 // Создаем массив стульев, где каждый элемент - это объект {height, width}
 const chairs = heights.map((height, index) => ({
 	height,
 	width: widths[index]
 }));
-
-// Сортируем стулья по высоте
-chairs.sort((a, b) => a.height - b.height);
 
 // Вызываем функцию для поиска минимального неудобства
 const result = findMinDiscomfort(n, H, chairs);
