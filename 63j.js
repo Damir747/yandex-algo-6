@@ -33,13 +33,8 @@ function findMinDiscomfort(n, H, chairs) {
 		// Сдвигаем левый указатель, если сумма ширины больше или равна H
 		while (currentWidthSum >= H) {
 
-			let temp = 0;
-			for (let i = left; i < right; i++) {
-				temp = Math.max(temp, Math.abs(chairs[i].height - chairs[i + 1].height));
-			}
-
 			// Максимальный дискомфорт для текущего окна
-			minDiscomfort = Math.min(minDiscomfort, temp);
+			minDiscomfort = Math.min(minDiscomfort, discomforts[maxDeque[0]]);
 
 			// Сдвигаем левый указатель
 			currentWidthSum -= chairs[left].width;
