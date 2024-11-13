@@ -22,7 +22,6 @@ function findMinDiscomfort(n, H, chairs) {
 		while (maxDeque.length > 0 && discomforts[maxDeque[maxDeque.length - 1]] <= discomforts[right - 1]) {
 			maxDeque.pop();
 		}
-		// Всё дело в этой проверке для первого элемента
 		if (right > 0) {
 			maxDeque.push(right - 1);
 		}
