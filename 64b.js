@@ -1,60 +1,88 @@
 const fs = require('fs');
 
+// Основная функция для решения задачи
 function calculateDescendants(n, relations) {
-	const childrenMap = new Map(); // Родитель → множество потомков
-	const descendantCounts = new Map(); // Имя → число потомков
+	const parentMap = new Map();
 
-	// Строим карту родителей → список их детей
+	// Заполняем карту потомок → родитель
 	relations.forEach(([child, parent]) => {
-		if (!childrenMap.has(parent)) {
-			childrenMap.set(parent, new Set());
+		if (!parentMap.has(parent)) {
+			parentMap.set(parent, new Set());
 		}
-		childrenMap.get(parent).add(child);
+		parentMap.get(parent).add(child);
 	});
+	// console.log('Дерево:', parentMap);
 
-	// Собираем всех людей
-	const allPeople = new Set(childrenMap.keys());
-	relations.forEach(([child]) => allPeople.add(child));
+	function findRoot(tree) {
+		const allNodes = new Set(tree.keys());
+		const children = new Set();
 
-	// Функция для вычисления числа потомков
-	function countDescendants(person) {
-		if (descendantCounts.has(person)) {
-			return descendantCounts.get(person);
+		for (const descendants of tree.values()) {
+			for (const child of descendants) {
+				children.add(child);
+			}
 		}
 
-		if (!childrenMap.has(person)) {
-			descendantCounts.set(person, 0);
-			return 0;
+		for (const child of children) {
+			allNodes.delete(child);
 		}
 
-		let count = 0;
-		for (const child of childrenMap.get(person)) {
-			count += 1 + countDescendants(child); // 1 за самого потомка + все его потомки
+		return Array.from(allNodes)[0]; // Корнем остается единственный элемент
+	}
+	const root = findRoot(parentMap);
+	// console.log('Корень:', root);
+
+	const descendantsCount = new Map();
+	// Итеративный обход в глубину
+	function traverseDFS(tree, node) {
+		let result = 0;
+		const stack = [node]; // Стек для хранения узлов, которые нужно обработать
+		const visited = new Set(); // Множество для отслеживания посещенных узлов
+
+		while (stack.length > 0) {
+			const currentNode = stack[stack.length - 1];
+
+			// Если узел уже был обработан, удаляем его из стека и считаем потомков
+			if (visited.has(currentNode)) {
+				stack.pop();
+				const children = tree.get(currentNode);
+				let count = 0;
+
+				if (children) {
+					children.forEach(child => {
+						count += 1 + (descendantsCount.get(child) || 0); // Суммируем потомков
+					});
+				}
+
+				// Сохраняем количество потомков для текущего узла
+				descendantsCount.set(currentNode, count);
+			} else {
+				// Если узел еще не обработан, помечаем его как посещенный и добавляем детей в стек
+				visited.add(currentNode);
+				const children = tree.get(currentNode);
+				if (children) {
+					children.forEach(child => {
+						stack.push(child); // Добавляем детей в стек для обработки
+					});
+				}
+			}
 		}
 
-		descendantCounts.set(person, count);
-		return count;
+		return result;
 	}
 
-	// Находим корень дерева (родоначальника)
-	const root = Array.from(allPeople).find(person => !relations.some(([child]) => child === person));
-
-	// Рекурсивно вычисляем число потомков для всех
-	countDescendants(root);
-
-	// Сортируем людей лексикографически
-	const sortedPeople = Array.from(allPeople).sort();
-
+	traverseDFS(parentMap, root);
+	sortedPeople = [...descendantsCount].sort((a, b) => a[0].localeCompare(b[0]));
 	// Формируем результат
-	return sortedPeople.map(person => `${person} ${descendantCounts.get(person)}`).join('\n');
+	return sortedPeople.map(person => `${person[0]} ${person[1]}`).join('\n');
 }
 
-// Чтение данных из файла
+// Чтение данных
 const input = fs.readFileSync('input.txt', 'utf8').trim().split('\n');
 const n = parseInt(input[0], 10);
-const relations = input.slice(1).map(line => line.split(' '));
+const relations = input.slice(1).map(line => line.trim().split(' '));
 
-// Вычисляем число потомков
+// Вычисляем количество потомков
 const result = calculateDescendants(n, relations);
 
 // Запись результата

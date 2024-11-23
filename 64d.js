@@ -75,7 +75,7 @@ function processCommands(commands) {
 	const results = [];
 
 	for (const command of commands) {
-		const [action, value] = command.split(' ');
+		const [action, value] = command.trim().split(' ');
 		if (action === 'ADD') {
 			results.push(tree.add(parseInt(value, 10)));
 		} else if (action === 'SEARCH') {

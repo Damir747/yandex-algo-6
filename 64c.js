@@ -1,54 +1,96 @@
 const fs = require('fs');
 
-function findLCA(n, relations, queries) {
+// Строим дерево с помощью Map: родитель -> потомки
+function buildTree(relations) {
 	const parentMap = new Map();
 
-	// Строим карту потомок → родитель
+	// Заполняем карту потомков -> родитель
 	relations.forEach(([child, parent]) => {
-		parentMap.set(child, parent);
+		if (!parentMap.has(parent)) {
+			parentMap.set(parent, new Set());
+		}
+		parentMap.get(parent).add(child);
 	});
 
-	// Функция для нахождения пути от элемента к корню
-	function getPathToRoot(person) {
-		const path = [];
-		while (person) {
-			path.push(person);
-			person = parentMap.get(person);
-		}
-		return path;
-	}
+	// Находим корень дерева
+	function findRoot(tree) {
+		const allNodes = new Set(tree.keys());  // Все ключи дерева (родители)
+		const children = new Set();
 
-	// Для каждого запроса находим LCA
-	const results = [];
-	for (const [a, b] of queries) {
-		const pathA = getPathToRoot(a);
-		const pathB = getPathToRoot(b);
-
-		// Ищем наибольшего общего предка, сравнивая пути с конца
-		let lca = null;
-		while (pathA.length > 0 && pathB.length > 0) {
-			const ancestorA = pathA.pop();
-			const ancestorB = pathB.pop();
-			if (ancestorA === ancestorB) {
-				lca = ancestorA;
-			} else {
-				break;
+		// Собираем всех детей
+		for (const descendants of tree.values()) {
+			for (const child of descendants) {
+				children.add(child);
 			}
 		}
-		results.push(lca);
+
+		// Корень - это единственный узел, который не является потомком
+		for (const child of children) {
+			allNodes.delete(child);
+		}
+
+		return Array.from(allNodes)[0]; // Корень остаётся единственным элементом
 	}
 
-	return results.join('\n');
+	const root = findRoot(parentMap);
+
+	// Теперь создадим depthMap (глубина каждого узла) и childMap (список потомков каждого родителя)
+	const depthMap = new Map();
+	const childMap = new Map();
+
+	// Инициализируем depthMap для корня
+	depthMap.set(root, 0);
+
+	// Функция для обхода дерева и вычисления глубины и потомков
+	function calculateDepthAndChildren(node, parent = {}, depth) {
+		childMap.set(node, parent);
+		const children = parentMap.get(node) || [];
+		children.forEach(child => {
+			depthMap.set(child, depth + 1);
+			calculateDepthAndChildren(child, node, depth + 1);  // Рекурсивный обход для вычисления глубины
+		});
+	}
+
+	// Начинаем обход с корня
+	calculateDepthAndChildren(root, {}, 0);
+
+	return { parentMap, depthMap, childMap };
+}
+
+
+// Нахождение наименьшего общего предка (LCA) двух элементов
+function findLCA(node1, node2, childMap, depthMap) {
+	// Сначала приводим оба узла к одной глубине
+	while (depthMap.get(node1) > depthMap.get(node2)) {
+		node1 = childMap.get(node1);
+	}
+	while (depthMap.get(node2) > depthMap.get(node1)) {
+		node2 = childMap.get(node2);
+	}
+
+	// Теперь поднимаемся по дереву одновременно, пока не найдем общий предок
+	while (node1 !== node2) {
+		node1 = childMap.get(node1);
+		node2 = childMap.get(node2);
+	}
+
+	return node1; // Найден общий предок
 }
 
 // Чтение данных
 const input = fs.readFileSync('input.txt', 'utf8').trim().split('\n');
 const n = parseInt(input[0], 10);
-const relations = input.slice(1, n).map(line => line.split(' '));
-const queries = input.slice(n).map(line => line.split(' '));
+let queries = input.slice(1).map(line => line.trim().split(' '));
+const relations = queries.slice(0, n - 1);
+queries = queries.slice(n - 1);
 
-// Вычисляем LCA для всех запросов
-const result = findLCA(n, relations, queries);
+// Строим дерево
+const { parentMap, depthMap, childMap } = buildTree(relations);
+// Вычисляем количество потомков
+let result = '';
+queries.forEach(([node1, node2]) => {
+	result = result + findLCA(node1, node2, childMap, depthMap) + '\n';
+})
 
 // Запись результата
 fs.writeFileSync('output.txt', result);
