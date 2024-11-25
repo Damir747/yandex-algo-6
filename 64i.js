@@ -75,18 +75,19 @@ function bfsExcept(start, exceptArray) {
 }
 
 // Проход по всем парам соседей на диаметре
-for (let i = 0; i < diameterPath.length - 1; i++) {
+for (let i = 0; i < diameterPath.length; i++) {
 	const leftNode = diameterPath[i];
-	const rightNode = diameterPath[i + 1];
+	graph[leftNode].forEach(rightNode => {
+		const { farthestNode: startNodeLeft } = bfsExcept(leftNode, [rightNode]);
+		const { farthestNode: endNodeLeft, dist: distFromStartLeft } = bfsExcept(startNodeLeft, [rightNode]); // Шаг 2: самый дальний узел от startNode
 
-	const { farthestNode: startNodeLeft } = bfsExcept(leftNode, [rightNode]);
-	const { farthestNode: endNodeLeft, dist: distFromStartLeft } = bfsExcept(startNodeLeft, [rightNode]); // Шаг 2: самый дальний узел от startNode
+		const { farthestNode: startNodeRight } = bfsExcept(rightNode, [leftNode]);
+		const { farthestNode: endNodeRight, dist: distFromStartRight } = bfsExcept(startNodeRight, [leftNode]); // Шаг 2: самый дальний узел от startNode
 
-	const { farthestNode: startNodeRight } = bfsExcept(rightNode, [leftNode]);
-	const { farthestNode: endNodeRight, dist: distFromStartRight } = bfsExcept(startNodeRight, [leftNode]); // Шаг 2: самый дальний узел от startNode
-
-	// Обновить максимальное произведение
-	maxProduct = Math.max(maxProduct, distFromStartLeft[endNodeLeft] * distFromStartRight[endNodeRight]);
+		// Обновить максимальное произведение
+		maxProduct = Math.max(maxProduct, distFromStartLeft[endNodeLeft] * distFromStartRight[endNodeRight]);
+	}
+	);
 }
 
 
