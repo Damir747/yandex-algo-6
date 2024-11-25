@@ -55,15 +55,15 @@ diameterPath.reverse(); // Полный путь по диаметру
 // 3. Рассчитать максимальное произведение
 let maxProduct = 0;
 
-function bfsExcept(start, except) {
+function bfsExcept(node, parent) {
 	const dist = Array(n + 1).fill(-1);
-	const queue = [start];
-	dist[start] = 0;
+	const queue = [node];
+	dist[node] = 0;
 
 	while (queue.length > 0) {
 		const node = queue.shift();
 		for (const neighbor of graph[node]) {
-			if (except !== neighbor && dist[neighbor] === -1) {
+			if (parent !== neighbor && dist[neighbor] === -1) {
 				dist[neighbor] = dist[node] + 1;
 				queue.push(neighbor);
 			}
