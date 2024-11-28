@@ -55,7 +55,8 @@ diameterPath.reverse(); // Полный путь по диаметру
 // 3. Рассчитать максимальное произведение
 let maxProduct = 0;
 
-function bfsExcept(node, parent) {
+console.log(graph);
+function dfs(node, parent) {
 	const dist = Array(n + 1).fill(-1);
 	const queue = [node];
 	dist[node] = 0;
@@ -74,15 +75,53 @@ function bfsExcept(node, parent) {
 	return { farthestNode, dist };
 }
 
+
+function calculateDepths(node, parent) {
+	let maxDepths = [0, 0]; // Два максимальных пути
+
+	for (const neighbor of graph[node]) {
+		console.log(neighbor);
+		if (neighbor !== parent) {
+			// Рекурсивный вызов для получения глубины от потомка
+			const depth = calculateDepths(neighbor, node) + 1;
+
+			// Обновляем два максимальных пути
+			if (depth > maxDepths[0]) {
+				maxDepths = [depth, maxDepths[0]];
+			} else if (depth > maxDepths[1]) {
+				maxDepths[1] = depth;
+			}
+		}
+		console.log(maxDepths);
+	}
+
+	// Сохраняем копию массива maxDepths для текущей вершины
+	depths[node] = [...maxDepths];
+	return maxDepths[0]; // Возвращаем максимальную глубину для родителя
+}
+
+// Инициализация
+const depths = Array.from({ length: n + 1 }, () => [0, 0]);
+for (const node of graph) {
+	for (const neighbor of node) {
+		const { farthestNode, dist } = dfs(neighbor, -1);
+		depths[node][0] = dist;
+		const { farthestNode: farthestNode1, dist: dist1 } = dfs(neighbor, farthestNode);
+		depths[node][1] = dist1;
+	}
+}
+// Результат
+console.log('Глубины узлов:', depths);
+
 // Проход по всем парам соседей на диаметре
 for (let i = 0; i < diameterPath.length; i++) {
 	const leftNode = diameterPath[i];
 	graph[leftNode].forEach(rightNode => {
-		const { farthestNode: startNodeLeft } = bfsExcept(leftNode, rightNode);
-		const { farthestNode: endNodeLeft, dist: distFromStartLeft } = bfsExcept(startNodeLeft, rightNode); // Шаг 2: самый дальний узел от startNode
+		const { farthestNode: startNodeLeft } = dfs(leftNode, rightNode);
+		const { farthestNode: endNodeLeft, dist: distFromStartLeft } = dfs(startNodeLeft, rightNode); // Шаг 2: самый дальний узел от startNode
 
-		const { farthestNode: startNodeRight } = bfsExcept(rightNode, leftNode);
-		const { farthestNode: endNodeRight, dist: distFromStartRight } = bfsExcept(startNodeRight, leftNode); // Шаг 2: самый дальний узел от startNode
+		const { farthestNode: startNodeRight } = dfs(rightNode, leftNode);
+		const { farthestNode: endNodeRight, dist: distFromStartRight } = dfs(startNodeRight, leftNode); // Шаг 2: самый дальний узел от startNode
 
 		// Обновить максимальное произведение
 		maxProduct = Math.max(maxProduct, distFromStartLeft[endNodeLeft] * distFromStartRight[endNodeRight]);
